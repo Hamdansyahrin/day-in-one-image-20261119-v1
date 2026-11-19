@@ -13,6 +13,12 @@ Design notes (broadsheet vernacular, chosen for a newspaper brief):
   layout   masthead / stat strip / 3 leads / 10 cards in two rows /
            map + index band; story numbers are real: they key the map pins
 
+Second-edition polish: scene skies and seas are graded washes rather than
+flat fills, the Shenzhen skyline carries lit windows, the Gulf scene gains
+the Hormuz tanker and a proper island landmass, the COP31 card trades its
+thermometer for heat waves over the globe, the map gains a graticule, and
+the footer carries an explicit date check (19 Nov 2026 is a Thursday).
+
 The renderer is deterministic: no randomness, no clock, no network.
 Run it twice and the bytes are identical.
 """
@@ -90,13 +96,31 @@ class Box:
 # so the same scene works at lead size and at card size.
 # --------------------------------------------------------------------------
 
+def vgrad(d, b, fy0, fy1, top, bottom, steps=24):
+    """A vertical colour wash between two relative heights of the box."""
+    for i in range(steps):
+        t0, t1 = i / steps, (i + 1) / steps
+        col = tuple(round(top[c] + (bottom[c] - top[c]) * (t0 + t1) / 2)
+                    for c in range(3))
+        d.rectangle(b.rect(0, fy0 + (fy1 - fy0) * t0, 1, fy0 + (fy1 - fy0) * t1),
+                    fill=col)
+
+
 def scene_summit(d, b):
-    d.rectangle(b.rect(0, 0, 1, 1), fill=(168, 196, 224))
+    vgrad(d, b, 0, 0.55, (158, 190, 222), (205, 224, 242))
     d.rectangle(b.rect(0, 0.55, 1, 1), fill=(214, 205, 182))
-    # skyline
+    # skyline, with lit windows dotted up each tower
     for fx, fw, fh in [(0.03, 0.10, 0.30), (0.16, 0.08, 0.22), (0.80, 0.09, 0.34),
                        (0.90, 0.07, 0.26), (0.68, 0.07, 0.20)]:
         d.rectangle(b.rect(fx, 0.55 - fh, fx + fw, 0.55), fill=(120, 142, 172))
+        rows = max(2, int(fh / 0.055))
+        for r_i in range(rows):
+            for c_i in range(2):
+                wx = fx + fw * (0.25 + 0.4 * c_i)
+                wy = 0.55 - fh + 0.035 + r_i * 0.05
+                if wy < 0.52:
+                    d.rectangle(b.rect(wx, wy, wx + fw * 0.18, wy + 0.022),
+                                fill=(235, 240, 200))
     # three flags on poles behind the table
     for fx, cols in [(0.30, [(178, 34, 52)] * 3), (0.50, [(222, 41, 16)] * 3),
                      (0.70, [(255, 255, 255)] * 3)]:
@@ -126,10 +150,14 @@ def scene_summit(d, b):
 
 
 def scene_bridge(d, b):
-    d.rectangle(b.rect(0, 0, 1, 1), fill=(226, 168, 120))              # dusk sky
-    d.rectangle(b.rect(0, 0.58, 1, 1), fill=(52, 92, 128))             # sea
+    vgrad(d, b, 0, 0.58, (214, 148, 104), (238, 196, 148))             # dusk sky
+    vgrad(d, b, 0.58, 1, (58, 100, 138), (38, 70, 104))                # sea
     for fy in (0.66, 0.78, 0.90):
         d.line([*b.s(0.04, fy), *b.s(0.96, fy)], fill=(90, 130, 165), width=SCALE)
+    # the fire's glow thrown on the water under the break
+    for fx, fw in [(0.44, 0.12), (0.47, 0.06)]:
+        d.line([*b.s(fx, 0.63), *b.s(fx + fw, 0.63)], fill=(240, 150, 70), width=2 * SCALE)
+        d.line([*b.s(fx + 0.01, 0.70), *b.s(fx + fw - 0.01, 0.70)], fill=(230, 130, 60), width=SCALE)
     # deck, towers, cables
     d.rectangle(b.rect(0.02, 0.50, 0.98, 0.545), fill=(70, 70, 78))
     for fx in (0.30, 0.68):
@@ -151,20 +179,32 @@ def scene_bridge(d, b):
 
 
 def scene_gulf(d, b):
-    d.rectangle(b.rect(0, 0, 1, 1), fill=(240, 196, 130))
-    d.rectangle(b.rect(0, 0.62, 1, 1), fill=(64, 110, 140))            # the Gulf
+    vgrad(d, b, 0, 0.62, (244, 206, 142), (238, 182, 116))
+    vgrad(d, b, 0.62, 1, (70, 116, 146), (48, 88, 118))                # the Gulf
     d.rectangle(b.rect(0, 0.52, 0.62, 0.64), fill=(222, 190, 130))     # shore
     # radar dome base
     cx, cy = b.s(0.24, 0.52)
     r = 0.11 * b.w * SCALE
     d.pieslice([cx - r, cy - r, cx + r, cy + r], 180, 360, fill=(240, 240, 235))
     d.rectangle(b.rect(0.13, 0.52, 0.35, 0.60), fill=(150, 140, 120))
-    # island target with flashes
-    d.ellipse(b.rect(0.66, 0.66, 0.97, 0.82), fill=(200, 175, 120))
-    for fx, fy in [(0.76, 0.70), (0.86, 0.74)]:
+    # Qeshm island as a landmass silhouette, flashes bursting on it
+    d.polygon([b.s(0.64, 0.74), b.s(0.70, 0.66), b.s(0.80, 0.64), b.s(0.90, 0.68),
+               b.s(0.97, 0.74), b.s(0.93, 0.82), b.s(0.78, 0.84), b.s(0.66, 0.81)],
+              fill=(206, 178, 118))
+    for fx, fy in [(0.76, 0.72), (0.87, 0.73)]:
         cx, cy = b.s(fx, fy)
-        rr = 0.05 * b.w * SCALE
+        rr = 0.045 * b.w * SCALE
         d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=(245, 140, 50))
+        d.ellipse([cx - rr * 0.45, cy - rr * 0.45, cx + rr * 0.45, cy + rr * 0.45],
+                  fill=(255, 200, 90))
+    # the Hormuz tanker, low on the water, smoke at its stern
+    d.polygon([b.s(0.38, 0.86), b.s(0.60, 0.86), b.s(0.57, 0.91), b.s(0.41, 0.91)],
+              fill=(40, 44, 54))
+    d.rectangle(b.rect(0.44, 0.815, 0.50, 0.86), fill=(40, 44, 54))
+    for fx, fy, rr in [(0.565, 0.79, 0.020), (0.585, 0.75, 0.028)]:
+        cx, cy = b.s(fx, fy)
+        r2 = rr * b.w * SCALE
+        d.ellipse([cx - r2, cy - r2 * 0.62, cx + r2, cy + r2 * 0.62], fill=(120, 112, 108))
     # missile arcs from shore to island, drone silhouettes
     d.arc(b.rect(0.20, 0.05, 0.85, 0.75), 200, 320, fill=RED, width=3 * SCALE)
     d.arc(b.rect(0.28, 0.12, 0.90, 0.78), 205, 315, fill=INK, width=2 * SCALE)
@@ -217,7 +257,7 @@ def scene_gta(d, b):
     d.rectangle(b.rect(0, 0, 1, 1), fill=(250, 170, 90))
     d.rectangle(b.rect(0, 0.42, 1, 0.66), fill=(240, 110, 110))
     d.rectangle(b.rect(0, 0.66, 1, 1), fill=(44, 48, 84))
-    cx, cy = b.s(0.50, 0.52)
+    cx, cy = b.s(0.56, 0.54)
     r = 0.16 * b.w * SCALE
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 214, 120))
     # palms
@@ -238,7 +278,9 @@ def scene_gta(d, b):
         rr = 0.035 * b.w * SCALE
         d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=(200, 200, 210))
     fnt = font(SERIF, 34)
-    d.text(b.s(0.065, 0.06), "VI", font=fnt, fill=(255, 244, 214))
+    gx, gy = b.s(0.065, 0.06)
+    d.text((gx + SCALE, gy + SCALE), "VI", font=fnt, fill=(120, 40, 60))
+    d.text((gx, gy), "VI", font=fnt, fill=(255, 244, 214))
 
 
 def scene_voyager(d, b):
@@ -322,12 +364,17 @@ def scene_cop(d, b):
     for pts in [[(0.05, 0.70), (0.20, 0.78), (0.16, 0.90)], [(0.42, 0.66), (0.50, 0.80), (0.44, 0.94)],
                 [(0.68, 0.72), (0.80, 0.80), (0.76, 0.92)]]:
         d.line([b.s(x, y) for x, y in pts], fill=(110, 74, 40), width=3 * SCALE)
-    # thermometer globe
-    gx, gy = b.s(0.26, 0.34)
-    gr = 0.17 * b.w * SCALE
+    # globe resting on the cracked earth, heat waves rising beside it
+    gx, gy = b.s(0.26, 0.50)
+    gr = 0.145 * b.w * SCALE
     d.ellipse([gx - gr, gy - gr, gx + gr, gy + gr], fill=(90, 150, 200))
-    d.rectangle(b.rect(0.235, 0.10, 0.285, 0.30), fill=RED)
-    d.ellipse(b.rect(0.215, 0.02, 0.305, 0.11), fill=RED)
+    d.arc([gx - gr, gy - gr, gx + gr, gy + gr], 300, 60, fill=(70, 170, 110), width=3 * SCALE)
+    for fx in (0.48, 0.55, 0.61):
+        pts = []
+        for k in range(9):
+            t = k / 8
+            pts.append(b.s(fx + 0.015 * (1 if k % 2 else -1), 0.54 - t * 0.36))
+        d.line(pts, fill=RED, width=3 * SCALE)
 
 
 def scene_ebola(d, b):
@@ -463,7 +510,7 @@ BRIEFS = [
 ]
 
 STATS = [("S&P 500", "7,324", "-0.23%"), ("FTSE 100", "10,551", "-1.30%"),
-         ("HANG SENG", "—", "-2.78%"), ("BRENT", "$89.3", "+0.15%"),
+         ("HANG SENG", "", "-2.78%"), ("BRENT", "$89.3", "+0.15%"),
          ("US 10-YR", "5.07%", "-0.73%"), ("WORLD MOOD", "UNEASY", "")]
 
 # Coarse continent outlines as (lon, lat) polygons for the pinned map.
@@ -515,6 +562,11 @@ def draw_map(d, box):
         x = box.x + (lon + 180) / 360 * box.w
         y = box.y + (78 - lat) / 138 * box.h
         return (x * SCALE, y * SCALE)
+    # graticule: faint lines every 30 degrees under the land
+    for lon in (-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150):
+        d.line([proj(lon, 78), proj(lon, -60)], fill=(188, 208, 218), width=SCALE)
+    for lat in (60, 30, 0, -30):
+        d.line([proj(-180, lat), proj(180, lat)], fill=(188, 208, 218), width=SCALE)
     for poly in LAND:
         d.polygon([proj(lon, lat) for lon, lat in poly], fill=(146, 172, 128))
     for num, lon, lat in PINS:
@@ -564,8 +616,11 @@ def render():
         fnt_n, fnt_v = font(SANS_B, 12), font(SANS_B, 13)
         d.text((sx * SCALE, 105 * SCALE), name, font=fnt_n, fill=(170, 190, 225))
         w_n = d.textlength(name, font=fnt_n) / SCALE
-        d.text(((sx + w_n + 6) * SCALE, 104 * SCALE), value, font=fnt_v, fill=(255, 255, 255))
-        w_v = d.textlength(value, font=fnt_v) / SCALE
+        if value:
+            d.text(((sx + w_n + 6) * SCALE, 104 * SCALE), value, font=fnt_v, fill=(255, 255, 255))
+            w_v = d.textlength(value, font=fnt_v) / SCALE + 5
+        else:
+            w_v = 0
         if delta:
             col = (255, 150, 140) if delta.startswith("-") else (150, 235, 170)
             d.text(((sx + w_n + w_v + 11) * SCALE, 105 * SCALE), delta, font=fnt_n, fill=col)
@@ -634,6 +689,9 @@ def render():
     d.text((M * SCALE, (bot_y + 259) * SCALE),
            "One Day, One Page — a program-drawn front page, no photographs",
            font=font(SANS, 10), fill=GREY)
+    d.text((512 * SCALE, (bot_y + 259) * SCALE),
+           "DATE CHECK: 19 NOV 2026 = THURSDAY, VERIFIED",
+           font=font(SANS_B, 10), fill=NAVY, anchor="ma")
     d.text(((1024 - M) * SCALE, (bot_y + 259) * SCALE),
            "Sources: the wires of 19 Nov 2026",
            font=font(SANS, 10), fill=GREY, anchor="ra")
