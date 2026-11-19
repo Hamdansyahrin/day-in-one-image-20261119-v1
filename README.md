@@ -26,6 +26,11 @@ directory and verifies the copy by SHA-256 read-back. `render.py` is the
 deterministic renderer that produced `entry.png`; run it again and the
 bytes are identical.
 
+Second edition: the illustrated scenes are repainted with graded skies and
+seas, a lit Shenzhen skyline, the Hormuz tanker in the Gulf scene, heat waves
+over the COP31 globe, a graticule on the map, and a date-check line in the
+footer (19 November 2026 really is a Thursday).
+
 ## Run it
 
 ```sh
