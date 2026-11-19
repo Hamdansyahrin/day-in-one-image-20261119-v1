@@ -19,6 +19,13 @@ the Hormuz tanker and a proper island landmass, the COP31 card trades its
 thermometer for heat waves over the globe, the map gains a graticule, and
 the footer carries an explicit date check (19 Nov 2026 is a Thursday).
 
+Third-edition pass: the whole page sits inside a double-ruled broadsheet
+frame, every panel casts a soft offset shadow, the pin badges gain white
+rings, and the scenes gain incident — a sun and clouds over Shenzhen, a
+white-hot core in the bridge fire, a wake behind the Hormuz tanker,
+candlesticks behind the IPO chart, a Vice City skyline, a Milky Way band
+behind Voyager, lightning inside Cyclone Akvan and lit windows in Gaza.
+
 The renderer is deterministic: no randomness, no clock, no network.
 Run it twice and the bytes are identical.
 """
@@ -108,7 +115,16 @@ def vgrad(d, b, fy0, fy1, top, bottom, steps=24):
 
 def scene_summit(d, b):
     vgrad(d, b, 0, 0.55, (158, 190, 222), (205, 224, 242))
+    # morning sun and two flat-bottomed clouds over the skyline
+    cx, cy = b.s(0.90, 0.10)
+    r = 0.045 * b.w * SCALE
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 226, 130))
+    for fx, fy, fw in [(0.06, 0.07, 0.20), (0.58, 0.05, 0.16)]:
+        d.ellipse(b.rect(fx, fy, fx + fw, fy + 0.075), fill=(240, 246, 252))
+        d.rectangle(b.rect(fx + 0.02, fy + 0.035, fx + fw - 0.02, fy + 0.075),
+                    fill=(240, 246, 252))
     d.rectangle(b.rect(0, 0.55, 1, 1), fill=(214, 205, 182))
+    d.rectangle(b.rect(0.10, 0.86, 0.90, 0.97), fill=(168, 52, 46))  # red carpet
     # skyline, with lit windows dotted up each tower
     for fx, fw, fh in [(0.03, 0.10, 0.30), (0.16, 0.08, 0.22), (0.80, 0.09, 0.34),
                        (0.90, 0.07, 0.26), (0.68, 0.07, 0.20)]:
@@ -172,7 +188,11 @@ def scene_bridge(d, b):
         cx, cy = b.s(fx, fy)
         rr = r * b.w * SCALE
         d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=col)
-    for fx, fy, r in [(0.52, 0.24, 0.08), (0.59, 0.17, 0.10), (0.67, 0.12, 0.115)]:
+    # white-hot core at the heart of the blaze
+    cx, cy = b.s(0.50, 0.42)
+    rr = 0.032 * b.w * SCALE
+    d.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=(255, 240, 205))
+    for fx, fy, r in [(0.52, 0.24, 0.08), (0.59, 0.17, 0.10), (0.67, 0.12, 0.115), (0.75, 0.09, 0.125)]:
         cx, cy = b.s(fx, fy)
         rr = r * b.w * SCALE
         d.ellipse([cx - rr, cy - rr * 0.6, cx + rr, cy + rr * 0.6], fill=(105, 100, 100))
@@ -198,6 +218,8 @@ def scene_gulf(d, b):
         d.ellipse([cx - rr * 0.45, cy - rr * 0.45, cx + rr * 0.45, cy + rr * 0.45],
                   fill=(255, 200, 90))
     # the Hormuz tanker, low on the water, smoke at its stern
+    d.line([*b.s(0.30, 0.925), *b.s(0.40, 0.90)], fill=(215, 230, 238), width=2 * SCALE)
+    d.line([*b.s(0.30, 0.955), *b.s(0.41, 0.915)], fill=(215, 230, 238), width=SCALE)
     d.polygon([b.s(0.38, 0.86), b.s(0.60, 0.86), b.s(0.57, 0.91), b.s(0.41, 0.91)],
               fill=(40, 44, 54))
     d.rectangle(b.rect(0.44, 0.815, 0.50, 0.86), fill=(40, 44, 54))
@@ -217,7 +239,11 @@ def scene_gulf(d, b):
 
 def scene_ipo(d, b):
     d.rectangle(b.rect(0, 0, 1, 1), fill=(233, 238, 246))
-    # rising chart
+    # candlesticks under the trend, then the rising chart itself
+    for fx, fhi, flo in [(0.14, 0.72, 0.86), (0.36, 0.62, 0.78), (0.54, 0.58, 0.70),
+                         (0.70, 0.42, 0.56), (0.86, 0.26, 0.40)]:
+        d.line([*b.s(fx, fhi - 0.05), *b.s(fx, flo + 0.03)], fill=(120, 150, 170), width=SCALE)
+        d.rectangle(b.rect(fx - 0.022, fhi, fx + 0.022, flo), fill=(90, 160, 150))
     pts = [b.s(fx, fy) for fx, fy in [(0.06, 0.82), (0.28, 0.70), (0.45, 0.74), (0.62, 0.52), (0.80, 0.34), (0.93, 0.20)]]
     d.line(pts, fill=TEAL, width=4 * SCALE)
     d.polygon([b.s(0.93, 0.20), b.s(0.84, 0.22), b.s(0.90, 0.30)], fill=TEAL)
@@ -229,8 +255,8 @@ def scene_ipo(d, b):
     for f in (0.14, 0.22, 0.30):
         d.line([*b.s(f, 0.06), *b.s(f, 0.12)], fill=NAVY, width=2 * SCALE)
         d.line([*b.s(f, 0.36), *b.s(f, 0.42)], fill=NAVY, width=2 * SCALE)
-    fnt = font(SANS_B, 30)
-    cx, cy = b.s(0.66, 0.58)
+    fnt = font(SANS_B, 36)
+    cx, cy = b.s(0.64, 0.60)
     d.text((cx, cy), "$83", font=fnt, fill=INK, anchor="mm")
 
 
@@ -260,6 +286,10 @@ def scene_gta(d, b):
     cx, cy = b.s(0.56, 0.54)
     r = 0.16 * b.w * SCALE
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 214, 120))
+    # Vice City skyline along the horizon, in front of the setting sun
+    for fx, fw, fh in [(0.02, 0.07, 0.16), (0.11, 0.05, 0.11), (0.80, 0.06, 0.19),
+                       (0.88, 0.05, 0.13), (0.94, 0.05, 0.09)]:
+        d.rectangle(b.rect(fx, 0.66 - fh, fx + fw, 0.66), fill=(120, 60, 90))
     # palms
     for fx, flip in [(0.10, 1), (0.90, -1)]:
         x0, y0 = b.s(fx, 0.98)
@@ -291,6 +321,14 @@ def scene_voyager(d, b):
         cx, cy = b.s(fx, fy)
         r = 2 * SCALE
         d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(235, 238, 255))
+    # the Milky Way: a soft diagonal band of fainter, denser stars
+    for k in range(26):
+        t = k / 25
+        fx = 0.06 + 0.62 * t
+        fy = 0.88 - 0.52 * t + (0.05 if k % 3 == 0 else -0.03 if k % 3 == 1 else 0.0)
+        cx, cy = b.s(fx, fy)
+        r = SCALE if k % 4 else 2 * SCALE
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(170, 180, 220))
     # probe: big dish, boom, gold record
     cx, cy = b.s(0.42, 0.48)
     r = 0.20 * b.w * SCALE
@@ -305,6 +343,7 @@ def scene_voyager(d, b):
     ex, ey = b.s(0.90, 0.86)
     er = 0.045 * b.w * SCALE
     d.ellipse([ex - er, ey - er, ex + er, ey + er], fill=(90, 150, 230))
+    d.ellipse([ex - er * 0.55, ey - er * 0.4, ex + er * 0.1, ey + er * 0.25], fill=(110, 190, 120))
     for t in (0.25, 0.45, 0.65, 0.82):
         px = cx + (ex - cx) * t
         py = cy + (ey - cy) * t
@@ -324,6 +363,9 @@ def scene_cyclone(d, b):
         d.arc([cx - rw, cy - rh, cx + rw, cy + rh], a0, a0 + 250, fill=(245, 245, 245), width=5 * SCALE)
     er = 0.035 * b.w * SCALE
     d.ellipse([cx - er, cy - er, cx + er, cy + er], fill=(70, 90, 120))
+    # a lightning bolt tearing out of the storm wall
+    d.polygon([b.s(0.30, 0.10), b.s(0.38, 0.10), b.s(0.33, 0.24), b.s(0.40, 0.24),
+               b.s(0.27, 0.46), b.s(0.30, 0.29), b.s(0.24, 0.29)], fill=(255, 230, 110))
     # rain and a bent palm on the coast
     for fx in (0.08, 0.20, 0.32, 0.46):
         d.line([*b.s(fx, 0.66), *b.s(fx - 0.04, 0.80)], fill=(220, 235, 245), width=2 * SCALE)
@@ -350,7 +392,7 @@ def scene_loan(d, b):
     # Ukraine ribbon, with the loan figure set inside its yellow band
     d.rectangle(b.rect(0.52, 0.22, 0.96, 0.44), fill=(0, 91, 187))
     d.rectangle(b.rect(0.52, 0.44, 0.96, 0.66), fill=(255, 213, 0))
-    fnt = font(SANS_B, 17)
+    fnt = font(SANS_B, 19)
     d.text(b.s(0.74, 0.55), "€45bn", font=fnt, fill=NAVY, anchor="mm")
 
 
@@ -418,6 +460,11 @@ def scene_gaza(d, b):
               (0.55, 0.40, 0.12), (0.69, 0.28, 0.11), (0.82, 0.36, 0.13)]
     for fx, fh, fw in blocks:
         d.rectangle(b.rect(fx, 0.78 - fh, fx + fw, 0.78), fill=(150, 138, 122))
+        # lit windows dotted up each standing block
+        for wy in (0.78 - fh + 0.05, 0.78 - fh + 0.13, 0.78 - fh + 0.21):
+            if wy < 0.72:
+                for wx in (fx + 0.025, fx + fw - 0.045):
+                    d.rectangle(b.rect(wx, wy, wx + 0.018, wy + 0.028), fill=(250, 224, 150))
     d.polygon([b.s(0.29, 0.40), b.s(0.35, 0.52), b.s(0.41, 0.40)], fill=(232, 205, 165))
     d.rectangle(b.rect(0, 0.78, 1, 1), fill=(190, 170, 140))
     # the Yellow Line
@@ -572,7 +619,7 @@ def draw_map(d, box):
     for num, lon, lat in PINS:
         cx, cy = proj(lon, lat)
         r = 9 * SCALE
-        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=RED)
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=RED, outline=(255, 255, 255), width=SCALE)
         fnt = font(SANS_B, 10 if num < 10 else 9)
         d.text((cx, cy - 1 * SCALE), str(num), font=fnt, fill=(255, 255, 255), anchor="mm")
     # pin 7: Voyager, off the top of the map with a dashed trail
@@ -583,14 +630,14 @@ def draw_map(d, box):
         px, py = cx + (ex - cx) * t, cy + (ey - cy) * t
         d.ellipse([px - 2 * SCALE, py - 2 * SCALE, px + 2 * SCALE, py + 2 * SCALE], fill=NAVY)
     r = 9 * SCALE
-    d.ellipse([ex - r, ey - r, ex + r, ey + r], fill=NAVY)
+    d.ellipse([ex - r, ey - r, ex + r, ey + r], fill=NAVY, outline=(255, 255, 255), width=SCALE)
     d.text((ex, ey - 1 * SCALE), "7", font=font(SANS_B, 10), fill=(255, 255, 255), anchor="mm")
 
 
 def pin_badge(d, x, y, num):
     r = 11 * SCALE
     cx, cy = x * SCALE, y * SCALE
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=RED)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=RED, outline=(255, 255, 255), width=2 * SCALE)
     d.text((cx, cy - 1 * SCALE), str(num), font=font(SANS_B, 12), fill=(255, 255, 255), anchor="mm")
 
 
@@ -599,13 +646,19 @@ def render():
     d = ImageDraw.Draw(img)
     M = 18  # page margin, unscaled px
 
+    # ---- page frame: a double-ruled broadsheet border --------------------
+    d.rectangle([7 * SCALE, 7 * SCALE, (1024 - 7) * SCALE, (1024 - 7) * SCALE],
+                outline=INK, width=2 * SCALE)
+    d.rectangle([11 * SCALE, 11 * SCALE, (1024 - 11) * SCALE, (1024 - 11) * SCALE],
+                outline=GOLD, width=SCALE)
+
     # ---- masthead ------------------------------------------------------
-    d.text(((M + 2) * SCALE, 12 * SCALE), "THE WORLD IN ONE IMAGE",
+    d.text(((M + 2) * SCALE, 14 * SCALE), "THE WORLD IN ONE IMAGE",
            font=font(SANS_B, 13), fill=RED)
-    d.text(((1024 - M - 2) * SCALE, 12 * SCALE), "45 STORIES · ONE PAGE",
+    d.text(((1024 - M - 2) * SCALE, 14 * SCALE), "45 STORIES · ONE PAGE · THIRD EDITION",
            font=font(SANS_B, 13), fill=INK, anchor="ra")
-    d.text((512 * SCALE, 30 * SCALE), "Thursday, 19 November 2026",
-           font=font(SERIF, 43), fill=NAVY, anchor="ma")
+    d.text((512 * SCALE, 31 * SCALE), "Thursday, 19 November 2026",
+           font=font(SERIF, 45), fill=NAVY, anchor="ma")
     d.line([M * SCALE, 86 * SCALE, (1024 - M) * SCALE, 86 * SCALE], fill=INK, width=3 * SCALE)
     d.line([M * SCALE, 91 * SCALE, (1024 - M) * SCALE, 91 * SCALE], fill=INK, width=SCALE)
 
@@ -634,6 +687,8 @@ def render():
     lead_w = (1024 - 2 * M - 2 * gap) // 3
     for i, (kicker, head, sub) in enumerate(LEADS):
         x = M + i * (lead_w + gap)
+        d.rectangle([(x + 3) * SCALE, (lead_y + 3) * SCALE, (x + lead_w + 3) * SCALE,
+                     (lead_y + lead_h + 3) * SCALE], fill=(226, 216, 188))
         d.rectangle([x * SCALE, lead_y * SCALE, (x + lead_w) * SCALE,
                      (lead_y + lead_h) * SCALE], fill=CARD_BG, outline=RULE, width=SCALE)
         SCENES[i](d, Box(x + 5, lead_y + 5, lead_w - 10, 138))
@@ -652,6 +707,8 @@ def render():
         x = M + col * (card_w + cgap)
         y = card_y0 + row * (card_h + cgap)
         num = i + 4
+        d.rectangle([(x + 2) * SCALE, (y + 2) * SCALE, (x + card_w + 2) * SCALE,
+                     (y + card_h + 2) * SCALE], fill=(226, 216, 188))
         d.rectangle([x * SCALE, y * SCALE, (x + card_w) * SCALE, (y + card_h) * SCALE],
                     fill=CARD_BG, outline=RULE, width=SCALE)
         SCENES[num - 1](d, Box(x + 4, y + 4, card_w - 8, 62))
