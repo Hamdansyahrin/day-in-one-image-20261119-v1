@@ -31,6 +31,13 @@ seas, a lit Shenzhen skyline, the Hormuz tanker in the Gulf scene, heat waves
 over the COP31 globe, a graticule on the map, and a date-check line in the
 footer (19 November 2026 really is a Thursday).
 
+Third edition: the page gains a double-ruled broadsheet frame in ink and
+gold, soft shadows under every panel, white-ringed map pins, and more
+incident in the scenes — sun and clouds over Shenzhen, a white-hot core in
+the Crimean Bridge fire, a wake behind the Hormuz tanker, candlesticks
+behind the IPO chart, the Vice City skyline at sunset, a Milky Way band
+behind Voyager 1, lightning inside Cyclone Akvan and lit windows in Gaza.
+
 ## Run it
 
 ```sh
